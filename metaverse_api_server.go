@@ -9,6 +9,7 @@ import (
 	"meta_api/protocal"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -247,11 +248,11 @@ func Search_nodes(c *gin.Context, object_id string, field_name string, meta_api_
 
 			if field_name == "" || !ok2 {
 				res = append(res, obj.Info)
-				count++
+				find_count++
 			} else {
 				obj2 := map[string]string{"object_id": object_id, "field_name": field_value}
 				res = append(res, obj2)
-				count++
+				find_count++
 			}
 		}
 	}
@@ -264,6 +265,24 @@ func Search_nodes(c *gin.Context, object_id string, field_name string, meta_api_
 			}
 			v, ok := obj.Info["meta_api_class_id"]
 			if ok && v == meta_api_class_id {
+				res = append(res, obj.Info)
+				find_count++
+			}
+
+			if find_count >= (int)(limit) {
+				break
+			}
+		}
+	}
+	count = 0
+	if find_count < (int)(limit) {
+		for _, obj := range object_info_id_obj {
+			count++
+			if count < offset {
+				continue
+			}
+			v, ok := obj.Info["meta_api_class_id"]
+			if ok && strings.Contains(v, meta_api_class_id) {
 				res = append(res, obj.Info)
 				find_count++
 			}
