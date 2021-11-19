@@ -261,7 +261,7 @@ func init_param() {
 		"meta_api_class_id":   "meta-api-server-class-1",
 		"api_info":            "https://thoughts.aliyun.com/share/61953ed66a1d11001aecd4f9#title=元宇宙通用通信协议_Metaverse_General_Protocal",
 		"info_url":            "https://thoughts.aliyun.com/share/6195068ebdc2c4001aea0058",
-		"api_url":             "http://42.194.159.204/api",
+		"api_url":             "http://42.194.159.204:8081/api",
 		"meta_api_info_url":   "https://thoughts.aliyun.com/share/61954da2c1a410001add844d#title=元宇宙_API_基础信息原语描述",
 	}
 
@@ -282,7 +282,7 @@ api_url:` + api_info_map["api_url"]
 "meta_api_class_id":"meta-api-server-class-1",
 "api_info":"https://thoughts.aliyun.com/share/61953ed66a1d11001aecd4f9#title=元宇宙通用通信协议_Metaverse_General_Protocal",
 "info_url":"https://thoughts.aliyun.com/share/6195068ebdc2c4001aea0058",
-"api_url":"http://42.194.159.204/api",
+"api_url":"http://42.194.159.204:8081/api",
 "meta_api_ver":1.0}
 `
 }
