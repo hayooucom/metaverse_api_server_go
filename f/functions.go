@@ -6,15 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"meta_api/g"
 	"meta_api/protocal"
 	"net"
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 func Try(fun func(), handler func(interface{})) {
@@ -96,6 +93,20 @@ func Dump_meta_data(meta_data []byte) {
 			return
 		}
 	}
+	fmt.Println("")
+}
+
+func GetPulicIP2() string {
+	resp, err := http.Get("http://myexternalip.com/raw")
+	if err != nil {
+		return ""
+	}
+	defer resp.Body.Close()
+	content, _ := ioutil.ReadAll(resp.Body)
+	//buf := new(bytes.Buffer)
+	//buf.ReadFrom(resp.Body)
+	//s := buf.String()
+	return string(content)
 }
 
 func GetPulicIP() string {
@@ -106,7 +117,9 @@ func GetPulicIP() string {
 	idx := strings.LastIndex(localAddr, ":")
 	return localAddr[0:idx]
 }
-func IsPublicIP(IP net.IP) bool {
+
+func IsPublicIP(ip string) bool {
+	IP := net.ParseIP(ip)
 	if IP.IsLoopback() || IP.IsLinkLocalMulticast() || IP.IsLinkLocalUnicast() {
 		return false
 	}
@@ -141,17 +154,25 @@ func Post_api_info(url string, post_data string) string {
 func Conv_string(i int) string {
 	return fmt.Sprintf("%d", i)
 }
-
-func Check_if_need_get_info(c *gin.Context, object_info_ip_id *map[string]string) bool {
-	ip := c.ClientIP()
+func Get_map_value(m map[string]string, key string) string {
+	if v, ok := m[key]; ok {
+		return v
+	}
+	return ""
+}
+func Check_if_need_get_info(ip string, object_info_ip_id *map[string]string) bool {
+	g.Object_info_map_lock.RLock()
 	_, ok := (*object_info_ip_id)[ip]
+	g.Object_info_map_lock.RUnlock()
 	if !ok {
 		//request json of api_info
 		data := []byte{byte(1)}
 		meta_data_send := Get_meta_protcal(0, 0, 3, 0, 0, data)
 
 		outb, _ := JSON_encode(meta_data_send)
-		c.String(http.StatusOK, string(outb))
+		url := "http://" + ip + ":8081/api"
+		go Post_api_info(url, string(outb))
+		//c.String(http.StatusOK, string(outb))
 		return true
 
 	}
@@ -206,7 +227,8 @@ func Http_post_with_header(url string, data string, header map[string]string) st
 func HttpGet(url string) string {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Fatal("Error reading request. ", err)
+		//log.Fatal("Error reading request. ", err)
+		return ""
 	}
 
 	req.Header.Set("Cache-Control", "no-cache")
@@ -216,12 +238,14 @@ func HttpGet(url string) string {
 	resp, err := client.Do(req)
 	if err != nil {
 		//log.Fatal("Error reading response. ", err)
+		return ""
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		//log.Fatal("Error reading body. ", err)
+		return ""
 	}
 	return string(body)
 }

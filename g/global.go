@@ -1,5 +1,15 @@
 package g
 
+import "sync"
+
+var Object_info_map_lock sync.Mutex
+
+type QUERY_node_S struct {
+	Object_id         string `json:"object_id"`
+	Field_name        string `json:"field_name"`
+	Meta_api_class_id string `json:"meta_api_class_id"`
+}
+
 type META_API_INFO_S struct {
 	Meta_api_ver        string
 	Id                  string
