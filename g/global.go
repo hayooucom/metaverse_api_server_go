@@ -2,7 +2,7 @@ package g
 
 import "sync"
 
-var Object_info_map_lock sync.Mutex
+var Object_info_map_lock sync.RWMutex
 
 type QUERY_node_S struct {
 	Object_id         string `json:"object_id"`

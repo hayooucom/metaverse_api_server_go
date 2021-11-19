@@ -1,6 +1,7 @@
 package f
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
@@ -10,6 +11,8 @@ import (
 	"meta_api/protocal"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -160,6 +163,83 @@ func Get_map_value(m map[string]string, key string) string {
 	}
 	return ""
 }
+
+// 判断文件夹是否存在
+func PathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+func File_read(path string) []byte {
+
+	pathwd, _ := filepath.Abs(".")
+	//path ,_ := os.Getwd()
+	path = pathwd + "/save/" + path
+
+	file, err := os.Open(path)
+	if err != nil {
+		fmt.Println("open file err", err)
+		return []byte{}
+	}
+	defer file.Close()
+	fileContent, err := ioutil.ReadAll(file)
+	if err != nil {
+		return []byte{}
+	}
+	return fileContent
+}
+
+func Save_file(key string, msg string) {
+	if key == "" {
+		return
+	}
+	path, _ := filepath.Abs(".")
+	//path ,_ := os.Getwd()
+	_dir := path + "/save"
+	exist, err := PathExists(_dir)
+	if err != nil {
+		fmt.Printf("get dir error![%v]\n", err)
+		return
+	}
+
+	if exist {
+		//fmt.Printf("has dir![%v]\n", _dir)
+	} else {
+		fmt.Printf("no dir![%v]\n", _dir)
+		// 创建文件夹
+		err := os.Mkdir(_dir, os.ModePerm)
+		if err != nil {
+			fmt.Printf("mkdir failed![%v]\n", err)
+		} else {
+			fmt.Printf("mkdir success!\n")
+		}
+	}
+
+	savefile := _dir + "/" + key
+
+	file, err := os.OpenFile(savefile, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0666)
+	if err != nil {
+		fmt.Println("open file err", err)
+		return
+	}
+
+	//及时关闭file句柄
+	defer file.Close()
+	//写入文件时，使用带缓存的 *Writer
+	write := bufio.NewWriter(file)
+
+	write.WriteString(msg)
+
+	//Flush将缓存的文件真正写入到文件中
+	write.Flush()
+}
+
 func Check_if_need_get_info(ip string, object_info_ip_id *map[string]string) bool {
 	g.Object_info_map_lock.RLock()
 	_, ok := (*object_info_ip_id)[ip]

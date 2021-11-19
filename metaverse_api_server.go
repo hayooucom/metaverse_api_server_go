@@ -9,6 +9,7 @@ import (
 	"meta_api/protocal"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -300,7 +301,7 @@ func Get_nodes(c *gin.Context, limit uint32, offset uint32) {
 
 func main() {
 	init_param()
-
+	go cron_jobs()
 	//1.创建路由
 	r := gin.Default()
 	r.Use(gin.Recovery())
@@ -311,12 +312,22 @@ func main() {
 	r.Run(":8081")
 }
 
-func cron_jobs(){
-	for{
-		case <-time.After(time.Second * 10):
-			object_info_id_obj
-			break
-
+func cron_jobs() {
+	for {
+		select {
+		case <-time.After(time.Second * 300):
+			{
+				fmt.Println("saving object_info_id_obj.json")
+				f.Try(func() {
+					meta_json2, _ := f.JSON_encode(object_info_id_obj)
+					f.Save_file("object_info_id_obj.json", string(meta_json2))
+					meta_json3, _ := f.JSON_encode(object_info_ip_id)
+					f.Save_file("object_info_ip_id.json", string(meta_json3))
+				}, func(e interface{}) {
+					fmt.Println(e)
+				})
+			}
+		}
 	}
 }
 
@@ -332,7 +343,7 @@ func store_obj_info(c *gin.Context, meta_data []byte) {
 		err := f.JSON_decode(meta_data, &api_info)
 		if err == nil {
 			id := api_info["id"]
-			
+
 			object_info_obj := obj_info_s{}
 			object_info_obj.Info = api_info
 			object_info_obj.Create_time = time.Now().Unix()
@@ -385,27 +396,46 @@ func init_param() {
 
 	//post_my_info
 
-	g.Object_info_lock = &sync.Mutex{}
+	g.Object_info_map_lock = sync.RWMutex{}
 
 	f.Post_node_info(api_list, api_info_map)
 
 	object_info_ip_id = make(map[string]string)
 	object_info_id_obj = make(map[string]obj_info_s)
 
+	object_info_ip_id_d := f.File_read("object_info_ip_id.json")
+	if len(object_info_ip_id_d) > 0 {
+		object_info_ip_id_t := make(map[string]string)
+		err := f.JSON_decode(object_info_ip_id_d, &object_info_ip_id_t)
+		if err == nil {
+			fmt.Println("object_info_ip_id get sucess")
+			object_info_ip_id = object_info_ip_id_t
+		}
+	}
+	object_info_id_obj_d := f.File_read("object_info_id_obj.json")
+	if len(object_info_id_obj_d) > 0 {
+		object_info_id_obj_t := make(map[string]obj_info_s)
+		err := f.JSON_decode(object_info_id_obj_d, &object_info_id_obj_t)
+		if err == nil {
+			fmt.Println("object_info_id_obj get sucess")
+			object_info_id_obj = object_info_id_obj_t
+		}
+	}
+
 	g.Object_info_map_lock.Lock()
 	_, ok := object_info_ip_id[ip]
 	if !ok {
 
 		id := api_info_map["id"]
-		
+
 		object_info_obj := obj_info_s{}
 		object_info_obj.Info = api_info_map
-		
+
 		object_info_ip_id[ip] = id
 		object_info_id_obj[id] = object_info_obj
 		//backup
 		//object_info_id_obj[id+"-1"] = object_info_obj
-		
+
 	}
 	g.Object_info_map_lock.Unlock()
 
