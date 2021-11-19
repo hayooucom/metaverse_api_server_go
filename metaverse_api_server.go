@@ -60,11 +60,10 @@ func api_handle(c *gin.Context) {
 	}
 
 	if do == "get_nodes" {
-		count := GET_query(c, "count")
 		limit := GET_query(c, "limit")
 		offset := GET_query(c, "offset")
 
-		get_nodes(c, (uint32)(stoi(count)), (uint32)(stoi(limit)), (uint32)(stoi(offset)))
+		get_nodes(c, (uint32)(stoi(limit)), (uint32)(stoi(offset)))
 		return
 	}
 
@@ -127,10 +126,10 @@ func api_handle(c *gin.Context) {
 
 		case 6:
 			{
-				count := (uint32)(0)
+
 				limit := (uint32)(meta_data[0])
 				offset := (uint32)(meta_data[1]) | (uint32)(meta_data[1])<<8 | (uint32)(meta_data[2])<<16 | (uint32)(meta_data[3])<<24
-				get_nodes(c, count, limit, offset)
+				get_nodes(c, limit, offset)
 				check_if_need_get_info(c)
 			}
 			break
@@ -150,20 +149,23 @@ func stoi(s string) int {
 	return int(vid)
 }
 
-func get_nodes(c *gin.Context, count uint32, limit uint32, offset uint32) {
+func get_nodes(c *gin.Context, limit uint32, offset uint32) {
 	res := []map[string]string{}
+	find_count := 0
+	count := (uint32)(0)
 	for _, obj := range object_info_id_obj {
 		count++
 		if count < offset {
 			continue
 		}
 		res = append(res, obj.Info)
-		if count >= limit {
-			outb, _ := JSON_encode(res)
-			c.String(http.StatusOK, string(outb))
+		find_count++
+		if find_count >= (int)(limit) {
 			break
 		}
 	}
+	outb, _ := JSON_encode(res)
+	c.String(http.StatusOK, string(outb))
 }
 
 func main() {
@@ -297,7 +299,7 @@ func init_param() {
 		object_info_obj := obj_info_s{}
 		object_info_obj.Info = api_info_map
 		object_info_id_obj[id] = object_info_obj
-
+		object_info_id_obj[id+"-1"] = object_info_obj
 	}
 
 	api_info_str = `meta_api_ver:` + api_info_map["meta_api_ver"] +
