@@ -9,6 +9,7 @@ import (
 	"log"
 	"meta_api/protocal"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -55,6 +56,15 @@ func api_handle(c *gin.Context) {
 
 		outb, _ := JSON_encode(meta_data_send)
 		c.String(http.StatusOK, string(outb))
+		return
+	}
+
+	if do == "get_nodes" {
+		count := GET_query(c, "count")
+		limit := GET_query(c, "limit")
+		offset := GET_query(c, "offset")
+
+		get_nodes(c, (uint32)(stoi(count)), (uint32)(stoi(limit)), (uint32)(stoi(offset)))
 		return
 	}
 
@@ -120,21 +130,7 @@ func api_handle(c *gin.Context) {
 				count := (uint32)(0)
 				limit := (uint32)(meta_data[0])
 				offset := (uint32)(meta_data[1]) | (uint32)(meta_data[1])<<8 | (uint32)(meta_data[2])<<16 | (uint32)(meta_data[3])<<24
-				res := []map[string]string{}
-				for _, obj := range object_info_id_obj {
-
-					count++
-					if count < offset {
-						continue
-					}
-					res = append(res, obj.Info)
-					if count >= limit {
-						outb, _ := JSON_encode(res)
-						c.String(http.StatusOK, string(outb))
-						break
-					}
-				}
-
+				get_nodes(c, count, limit, offset)
 				check_if_need_get_info(c)
 			}
 			break
@@ -144,6 +140,30 @@ func api_handle(c *gin.Context) {
 
 	}
 
+}
+
+func stoi(s string) int {
+	vid, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return int(vid)
+}
+
+func get_nodes(c *gin.Context, count uint32, limit uint32, offset uint32) {
+	res := []map[string]string{}
+	for _, obj := range object_info_id_obj {
+		count++
+		if count < offset {
+			continue
+		}
+		res = append(res, obj.Info)
+		if count >= limit {
+			outb, _ := JSON_encode(res)
+			c.String(http.StatusOK, string(outb))
+			break
+		}
+	}
 }
 
 func main() {
@@ -161,7 +181,7 @@ func main() {
 func store_obj_info(c *gin.Context, meta_data []byte) {
 	ip := c.ClientIP()
 	_, ok := object_info_ip_id[ip]
-	if ok {
+	if !ok {
 		var api_info map[string]string
 		err := JSON_decode(meta_data, &api_info)
 		if err != nil {
@@ -253,6 +273,7 @@ func get_meta_protcal(CmdSet uint32, CmdID uint32, DataType uint32, CmdType uint
 func init_param() {
 	protocal.CRC16_init_param()
 	protocal.CRC32_init_param()
+
 	api_info_map = map[string]string{
 		"meta_api_ver":        "1.0",
 		"id":                  "meta-api-server-id-001",
@@ -264,6 +285,20 @@ func init_param() {
 		"api_url":             "http://42.194.159.204:8081/api",
 		"meta_api_info_url":   "https://thoughts.aliyun.com/share/61954da2c1a410001add844d#title=元宇宙_API_基础信息原语描述",
 	}
+	object_info_ip_id = make(map[string]string)
+	object_info_id_obj = make(map[string]obj_info_s)
+
+	ip := "42.194.159.204"
+	_, ok := object_info_ip_id[ip]
+	if !ok {
+
+		id := api_info_map["id"]
+		object_info_ip_id[ip] = id
+		object_info_obj := obj_info_s{}
+		object_info_obj.Info = api_info_map
+		object_info_id_obj[id] = object_info_obj
+
+	}
 
 	api_info_str = `meta_api_ver:` + api_info_map["meta_api_ver"] +
 		`id:` + api_info_map["id"] + `,
@@ -271,9 +306,9 @@ name:` + api_info_map["name"] + `,
 meta_api_class_name:` + api_info_map["meta_api_class_name"] + `,
 meta_api_class_id:` + api_info_map["meta_api_class_id"] + `,
 api_info:` + api_info_map["api_info"] + `,
-info_url:` + api_info_map["info_url"] + `,
+info_url:` + api_info_map["info_url"] + `,	
 api_url:` + api_info_map["api_url"] + `,
-api_url:` + api_info_map["api_url"]
+meta_api_info_url:` + api_info_map["meta_api_info_url"]
 
 	api_info_json_str = `
 {"id":"meta-api-server-id-001",
