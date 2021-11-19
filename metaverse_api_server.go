@@ -223,7 +223,12 @@ func api_handle(c *gin.Context) {
 		fmt.Println(err)
 		return
 	}
-	process_commands(c, data)
+	if len(data) > 0 {
+		process_commands(c, data)
+	} else {
+		c.String(http.StatusOK, api_info_str)
+		return
+	}
 
 }
 
@@ -458,8 +463,8 @@ func init_param() {
 	}
 	g.Object_info_map_lock.Unlock()
 
-	api_info_str = `meta_api_ver:` + api_info_map["meta_api_ver"] +
-		`id:` + api_info_map["id"] + `,
+	api_info_str = `meta_api_ver:` + api_info_map["meta_api_ver"] + `,
+id:` + api_info_map["id"] + `,
 name:` + api_info_map["name"] + `,
 meta_api_class_name:` + api_info_map["meta_api_class_name"] + `,
 meta_api_class_id:` + api_info_map["meta_api_class_id"] + `,
