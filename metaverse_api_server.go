@@ -16,7 +16,23 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var default_meta_API_ip []string
+func set_api_info_map() {
+	//设置里的 服务器信息 "id"，"name"，"meta_api_class_id"，"meta_api_class_name"，"api_info"，"info_url"等
+	//注意 ： 请勿改动 api_url
+	api_info_map = map[string]string{
+		"meta_api_ver":        "1.0",
+		"id":                  "meta-api-server-id-" + g.Server_ip,
+		"name":                "meta-api-server-" + g.Server_ip,
+		"meta_api_class_name": "meta-api-server-" + g.Server_ip,
+		"meta_api_class_id":   "meta-api-server-class-1-" + g.Server_ip,
+		"api_info":            "https://thoughts.aliyun.com/share/61953ed66a1d11001aecd4f9#title=元宇宙通用通信协议_Metaverse_General_Protocal",
+		"info_url":            "https://thoughts.aliyun.com/share/6195068ebdc2c4001aea0058",
+		"api_url":             "http://" + g.Server_ip + ":" + g.Server_port + "/api",
+		"meta_api_info_url":   "https://thoughts.aliyun.com/share/61954da2c1a410001add844d#title=元宇宙_API_基础信息原语描述_Metaverse_API_schema",
+	}
+}
+
+var default_meta_API_list []string
 var api_info_map map[string]string
 var api_info_str string
 var api_info_json_str string
@@ -49,9 +65,10 @@ func process_commands(c *gin.Context, data []byte) {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println("meta_json:")
-	meta_json2, _ := f.JSON_encode(meta_json)
-	fmt.Println(string(meta_json2))
+	//fmt.Println("process_commands data len:", len(data))
+	//fmt.Println("meta_json:")
+	//meta_json2, _ := f.JSON_encode(meta_json)
+	//fmt.Println(string(meta_json2))
 	/*for k, v := range meta_json {
 		fmt.Println(k + ":" + v)
 	}*/
@@ -61,8 +78,9 @@ func process_commands(c *gin.Context, data []byte) {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println("CmdSet:", meta_json.CmdSet, "CmdId", meta_json.CmdID)
 	client_ip := c.ClientIP()
+	fmt.Println("process_commands ip:", client_ip, ", CmdSet:", meta_json.CmdSet, ",CmdId:", meta_json.CmdID)
+
 	switch meta_json.CmdSet {
 	case 0:
 		switch meta_json.CmdID {
@@ -76,11 +94,7 @@ func process_commands(c *gin.Context, data []byte) {
 					store_obj_info(c, meta_data)
 
 					//try post my info
-					api_list := []string{client_ip}
-					for i := 0; i < len(default_meta_API_ip); i++ {
-						api_list[i] = "http://" + default_meta_API_ip[i] + ":8081/api"
-					}
-					f.Post_node_info(api_list, api_info_map)
+					f.Post_node_info(default_meta_API_list, api_info_map)
 					return
 				} else {
 
@@ -154,6 +168,9 @@ func process_commands(c *gin.Context, data []byte) {
 				object_id := f.Get_map_value(query_info, "object_id")
 				field_name := f.Get_map_value(query_info, "field_name")
 				meta_api_class_id := f.Get_map_value(query_info, "meta_api_class_id")
+				if meta_api_class_id == "" {
+					meta_api_class_id = f.Get_map_value(query_info, g.Sort_field_name_map["meta_api_class_id"])
+				}
 				limit := f.Get_map_value(query_info, "limit")
 				offset := f.Get_map_value(query_info, "offset")
 
@@ -210,6 +227,9 @@ func api_handle(c *gin.Context) {
 		object_id := GET_query(c, "object_id")
 		field_name := GET_query(c, "field_name")
 		meta_api_class_id := GET_query(c, "meta_api_class_id")
+		if meta_api_class_id == "" {
+			meta_api_class_id = GET_query(c, g.Sort_field_name_map["meta_api_class_id"])
+		}
 		limit := GET_query(c, "limit")
 		offset := GET_query(c, "offset")
 		if object_id != "" || field_name != "" || meta_api_class_id != "" {
@@ -240,25 +260,53 @@ func stoi(s string) int {
 	return int(vid)
 }
 
+func filte_field_name(obj obj_info_s, field_name string, res *[]map[string]string) {
+	field_name_list := []string{}
+
+	if field_name != "" {
+		field_name_list = strings.Split(field_name, ",")
+	}
+	//fmt.Println(field_name_list)
+
+	if field_name == "" {
+		*res = append(*res, obj.Info)
+	} else if len(field_name_list) == 1 {
+		field_value, ok2 := obj.Info[field_name]
+		if ok2 {
+			obj2 := map[string]string{"id": obj.Info["id"], field_name: field_value}
+			*res = append(*res, obj2)
+		}
+	} else {
+		obj2 := map[string]string{}
+		for _, fn := range field_name_list {
+
+			field_value, ok2 := obj.Info[fn]
+			if fn == "" || !ok2 {
+				continue
+			} else {
+
+				obj2["id"] = obj.Info["id"]
+				obj2[fn] = field_value
+			}
+		}
+		if len(obj2) > 0 {
+			*res = append(*res, obj2)
+		}
+	}
+
+}
+
 func Search_nodes(c *gin.Context, object_id string, field_name string, meta_api_class_id string, limit int, offset int) {
 	res := []map[string]string{}
 	find_count := 0
 	count := (0)
+
 	g.Object_info_map_lock.RLock()
 	if object_id != "" {
 		obj, ok := object_info_id_obj[object_id]
 		if ok {
-
-			field_value, ok2 := obj.Info[field_name]
-
-			if field_name == "" || !ok2 {
-				res = append(res, obj.Info)
-				find_count++
-			} else {
-				obj2 := map[string]string{"object_id": object_id, "field_name": field_value}
-				res = append(res, obj2)
-				find_count++
-			}
+			filte_field_name(obj, field_name, &res)
+			find_count++
 		}
 	}
 
@@ -268,9 +316,9 @@ func Search_nodes(c *gin.Context, object_id string, field_name string, meta_api_
 			if count < offset {
 				continue
 			}
-			v, ok := obj.Info["meta_api_class_id"]
+			v, ok := obj.Info["mci"]
 			if ok && v == meta_api_class_id {
-				res = append(res, obj.Info)
+				filte_field_name(obj, field_name, &res)
 				find_count++
 			}
 
@@ -286,9 +334,11 @@ func Search_nodes(c *gin.Context, object_id string, field_name string, meta_api_
 			if count < offset {
 				continue
 			}
-			v, ok := obj.Info["meta_api_class_id"]
+			v, ok := obj.Info["mci"]
+			//fmt.Println("Search_nodes 1 " + v + " " + meta_api_class_id)
 			if ok && strings.Contains(v, meta_api_class_id) {
-				res = append(res, obj.Info)
+				//fmt.Println("Search_nodes 2")
+				filte_field_name(obj, field_name, &res)
 				find_count++
 			}
 
@@ -333,7 +383,7 @@ func main() {
 	r.GET("/api", api_handle)
 	r.POST("/api", api_handle)
 	//3.监听端口，默认8080
-	r.Run(":8081")
+	r.Run(":" + g.Server_port)
 }
 
 func cron_jobs() {
@@ -390,33 +440,46 @@ func store_obj_info(c *gin.Context, meta_data []byte) {
 func init_param() {
 	protocal.CRC16_init_param()
 	protocal.CRC32_init_param()
+	g.Get_sort_field_name_map()
+	g.Server_port = "8081"
 
-	default_meta_API_ip = []string{"42.194.159.204"}
-	api_list := []string{}
-	for i := 0; i < len(default_meta_API_ip); i++ {
-		api_list = append(api_list, "http://"+default_meta_API_ip[i]+":8081/api")
-	}
+	default_meta_API_list = []string{"http://42.194.159.204:8081/api"}
+	var api_list = default_meta_API_list
 
-	ip := f.GetPulicIP2()
-	if !f.IsPublicIP(ip) {
-		ip = f.HttpGet(api_list[0] + "?do=getip")
-		if !f.IsPublicIP(ip) {
-			ip = f.GetPulicIP()
+	g.Server_ip = f.GetPulicIP2()
+	if !f.IsPublicIP(g.Server_ip) {
+		g.Server_ip = f.HttpGet(api_list[0] + "?do=getip")
+		if !f.IsPublicIP(g.Server_ip) {
+			g.Server_ip = f.GetPulicIP()
 		}
 	}
-	fmt.Println("ip:" + ip)
 
-	api_info_map = map[string]string{
-		"meta_api_ver":        "1.0",
-		"id":                  "meta-api-server-id-" + ip,
-		"name":                "meta-api-server-" + ip,
-		"meta_api_class_name": "meta-api-server-" + ip,
-		"meta_api_class_id":   "meta-api-server-class-1-" + ip,
-		"api_info":            "https://thoughts.aliyun.com/share/61953ed66a1d11001aecd4f9#title=元宇宙通用通信协议_Metaverse_General_Protocal",
-		"info_url":            "https://thoughts.aliyun.com/share/6195068ebdc2c4001aea0058",
-		"api_url":             "http://" + ip + ":8081/api",
-		"meta_api_info_url":   "https://thoughts.aliyun.com/share/61954da2c1a410001add844d#title=元宇宙_API_基础信息原语描述",
+	fmt.Println("Metaverse API server start !\n\nServer info:\n")
+	fmt.Println("g.Server_ip:" + g.Server_ip)
+	fmt.Println("g.Server_port:" + g.Server_port)
+
+	set_api_info_map()
+	/*
+	   	api_info_str = `meta_api_ver:` + api_info_map["meta_api_ver"] + `,
+	   id:` + api_info_map["id"] + `,
+	   name:` + api_info_map["name"] + `,
+	   meta_api_class_name:` + api_info_map["meta_api_class_name"] + `,
+	   meta_api_class_id:` + api_info_map["meta_api_class_id"] + `,
+	   api_info:` + api_info_map["api_info"] + `,
+	   info_url:` + api_info_map["info_url"] + `,
+	   api_url:` + api_info_map["api_url"] + `,
+	   meta_api_info_url:` + api_info_map["meta_api_info_url"]
+	*/
+	//fmt.Println(api_info_map)
+	new_api_info_map := map[string]string{}
+	for k, v := range api_info_map {
+		api_info_str += k + ":" + v + ",\n"
+		new_api_info_map[g.Sort_field_name_map[k]] = v
 	}
+	api_info_map = nil
+	api_info_map = new_api_info_map
+
+	fmt.Println(api_info_str)
 
 	//post_my_info
 
@@ -447,42 +510,19 @@ func init_param() {
 	}
 
 	g.Object_info_map_lock.Lock()
-	_, ok := object_info_ip_id[ip]
-	if !ok {
 
-		id := api_info_map["id"]
+	id := api_info_map["id"]
 
-		object_info_obj := obj_info_s{}
-		object_info_obj.Info = api_info_map
+	object_info_obj := obj_info_s{}
+	object_info_obj.Info = api_info_map
 
-		object_info_ip_id[ip] = id
-		object_info_id_obj[id] = object_info_obj
-		//backup
-		//object_info_id_obj[id+"-1"] = object_info_obj
+	object_info_ip_id[g.Server_ip] = id
+	object_info_id_obj[id] = object_info_obj
+	//backup
+	//object_info_id_obj[id+"-1"] = object_info_obj
 
-	}
 	g.Object_info_map_lock.Unlock()
 
-	api_info_str = `meta_api_ver:` + api_info_map["meta_api_ver"] + `,
-id:` + api_info_map["id"] + `,
-name:` + api_info_map["name"] + `,
-meta_api_class_name:` + api_info_map["meta_api_class_name"] + `,
-meta_api_class_id:` + api_info_map["meta_api_class_id"] + `,
-api_info:` + api_info_map["api_info"] + `,
-info_url:` + api_info_map["info_url"] + `,	
-api_url:` + api_info_map["api_url"] + `,
-meta_api_info_url:` + api_info_map["meta_api_info_url"]
-
-	api_info_json_str = `
-{"id":"meta-api-server-id-001",
-"name":"meta-api-server",
-"meta_api_class_name":"meta-api-server",
-"meta_api_class_id":"meta-api-server-class-1",
-"api_info":"https://thoughts.aliyun.com/share/61953ed66a1d11001aecd4f9#title=元宇宙通用通信协议_Metaverse_General_Protocal",
-"info_url":"https://thoughts.aliyun.com/share/6195068ebdc2c4001aea0058",
-"api_url":"http://42.194.159.204:8081/api",
-"meta_api_ver":1.0}
-`
 }
 
 func GET_query(c *gin.Context, key string) string {

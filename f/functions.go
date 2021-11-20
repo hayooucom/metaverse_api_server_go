@@ -76,9 +76,9 @@ func Post_node_info(api_list []string, api_info_map map[string]string) {
 		outb, _ := JSON_encode(meta_data_send)
 
 		for i := 0; i < len(api_list); i++ {
-
+			fmt.Println("Post_node_info url:" + api_list[i])
 			Post_api_info(api_list[i], string(outb))
-			fmt.Println(string(outb))
+			//fmt.Println(string(outb))
 		}
 	}, func(e interface{}) {
 
