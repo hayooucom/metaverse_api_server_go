@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"meta_api/f"
 	"meta_api/g"
@@ -188,6 +189,20 @@ func process_commands(c *gin.Context, data []byte) {
 	}
 }
 
+func website_handle(c *gin.Context) {
+	html_str := strings.Replace(api_info_str, "\n", "<br>\n", -1)
+	//html_str += "\n<br><a href=\"" + api_info_map[g.Sort_field_name_map["api_url"]] + "?do=get_nodes&count=0&limit=20&offset=0\">" + "connected nodes list</a><br>" +
+	//	"\n<br><a href=\"https://thoughts.aliyun.com/share/6195068ebdc2c4001aea0058#title=元宇宙接口标准\">" + "API docs</a><br>"
+	//c.String(http.StatusOK, html_str)
+
+	c.HTML(http.StatusOK, "index.html", gin.H{
+		"title":         "Metaverse standard API",
+		"body":          template.HTML(html_str),
+		"get_nodes_url": api_info_map[g.Sort_field_name_map["api_url"]] + "?do=get_nodes&count=0&limit=255&offset=0",
+	})
+	return
+}
+
 func api_handle(c *gin.Context) {
 	get_meta_api_info := GET_query(c, "get_meta_api_info")
 	do := GET_query(c, "do")
@@ -246,6 +261,7 @@ func api_handle(c *gin.Context) {
 	if len(data) > 0 {
 		process_commands(c, data)
 	} else {
+
 		c.String(http.StatusOK, api_info_str)
 		return
 	}
@@ -379,9 +395,12 @@ func main() {
 	//1.创建路由
 	r := gin.Default()
 	r.Use(gin.Recovery())
+
+	r.LoadHTMLGlob("./html/*")
 	//2.绑定路由规则，执行的函数
 	r.GET("/api", api_handle)
 	r.POST("/api", api_handle)
+	r.GET("/", website_handle)
 	//3.监听端口，默认8080
 	r.Run(":" + g.Server_port)
 }
@@ -389,7 +408,7 @@ func main() {
 func cron_jobs() {
 	for {
 		select {
-		case <-time.After(time.Second * 300):
+		case <-time.After(time.Second * 600):
 			{
 				fmt.Println("saving object_info_id_obj.json")
 				f.Try(func() {
