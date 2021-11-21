@@ -3,7 +3,7 @@
 #### 介绍
 元宇宙接口 API 服务器 实现。 
 
-The implementation of  [元宇宙统一接口标准](https://thoughts.aliyun.com/share/61953ed66a1d11001aecd4f9#title=元宇宙通用通信协议_Metaverse_General_Protocal)
+The implementation of  [Metaverse standard API 元宇宙接口标准](https://thoughts.aliyun.com/share/6195068ebdc2c4001aea0058#title=Metaverse_standard_API)
 
 说明：
 json 所有接口，字段通常为string类型
