@@ -22,10 +22,11 @@ func set_api_info_map() {
 	//注意 ： 请勿改动 api_url
 	api_info_map = map[string]string{
 		"meta_api_ver":        "1.0",
-		"id":                  "meta-api-server-id-" + g.Server_ip,
-		"name":                "meta-api-server-" + g.Server_ip,
-		"meta_api_class_name": "meta-api-server-" + g.Server_ip,
-		"meta_api_class_id":   "meta-api-server-class-1-" + g.Server_ip,
+		"id":                  "id-" + g.Server_ip,
+		"name":                "meta-api-server",
+		"meta_api_id":         "meta-api-server-id-" + g.Server_ip,
+		"meta_api_class_name": "meta-api-server",
+		"meta_api_class_id":   "meta-api-server-class",
 		"api_info":            "https://thoughts.aliyun.com/share/61953ed66a1d11001aecd4f9#title=元宇宙通用通信协议_Metaverse_General_Protocal",
 		"info_url":            "https://thoughts.aliyun.com/share/6195068ebdc2c4001aea0058",
 		"api_url":             "http://" + g.Server_ip + ":" + g.Server_port + "/api",
@@ -41,7 +42,6 @@ var meta_data_send g.META_PROTOCAL_S
 
 type obj_info_s struct {
 	Info        map[string]string
-	BaseInfo    g.META_API_INFO_S
 	Create_time int64
 }
 
@@ -170,7 +170,7 @@ func process_commands(c *gin.Context, data []byte) {
 				field_name := f.Get_map_value(query_info, "field_name")
 				meta_api_class_id := f.Get_map_value(query_info, "meta_api_class_id")
 				if meta_api_class_id == "" {
-					meta_api_class_id = f.Get_map_value(query_info, g.Sort_field_name_map["meta_api_class_id"])
+					meta_api_class_id = f.Get_map_value(query_info, g.Field_name_map_nor_sort["meta_api_class_id"])
 				}
 				limit := f.Get_map_value(query_info, "limit")
 				offset := f.Get_map_value(query_info, "offset")
@@ -191,19 +191,42 @@ func process_commands(c *gin.Context, data []byte) {
 
 func website_handle(c *gin.Context) {
 	html_str := strings.Replace(api_info_str, "\n", "<br>\n", -1)
-	//html_str += "\n<br><a href=\"" + api_info_map[g.Sort_field_name_map["api_url"]] + "?do=get_nodes&count=0&limit=20&offset=0\">" + "connected nodes list</a><br>" +
+	//html_str += "\n<br><a href=\"" + api_info_map[g.Field_name_map_nor_sort["api_url"]] + "?do=get_nodes&count=0&limit=20&offset=0\">" + "connected nodes list</a><br>" +
 	//	"\n<br><a href=\"https://thoughts.aliyun.com/share/6195068ebdc2c4001aea0058#title=元宇宙接口标准\">" + "API docs</a><br>"
 	//c.String(http.StatusOK, html_str)
 
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"title":         "Metaverse standard API",
 		"body":          template.HTML(html_str),
-		"get_nodes_url": api_info_map[g.Sort_field_name_map["api_url"]] + "?do=get_nodes&count=0&limit=255&offset=0",
+		"get_nodes_url": api_info_map[g.Field_name_map_nor_sort["api_url"]] + "?do=get_nodes&count=0&limit=255&offset=0",
 	})
 	return
 }
 
 func api_handle(c *gin.Context) {
+
+	api_handle2(c)
+	/*
+		ci := make(chan int)
+
+		//ctx, cancel := context.WithTimeout(context.Background(), time.Second*7)
+
+		go func(c1 *gin.Context, ci *chan int) {
+			f.Try(func() {
+				api_handle2(c1)
+			}, func(e interface{}) {
+				//print(e)
+				fmt.Println("run Handle_api_php error ", e)
+				//fmt.Println(string(debug.Stack()))
+			})
+
+			*ci <- 1
+		}(c, &ci)
+
+		<-ci
+	*/
+}
+func api_handle2(c *gin.Context) {
 	get_meta_api_info := GET_query(c, "get_meta_api_info")
 	do := GET_query(c, "do")
 	if get_meta_api_info == "text" {
@@ -243,7 +266,7 @@ func api_handle(c *gin.Context) {
 		field_name := GET_query(c, "field_name")
 		meta_api_class_id := GET_query(c, "meta_api_class_id")
 		if meta_api_class_id == "" {
-			meta_api_class_id = GET_query(c, g.Sort_field_name_map["meta_api_class_id"])
+			meta_api_class_id = GET_query(c, g.Field_name_map_nor_sort["meta_api_class_id"])
 		}
 		limit := GET_query(c, "limit")
 		offset := GET_query(c, "offset")
@@ -266,6 +289,10 @@ func api_handle(c *gin.Context) {
 		return
 	}
 
+}
+
+func i64tos(i int64) string {
+	return fmt.Sprintf("%d", i)
 }
 
 func stoi(s string) int {
@@ -300,7 +327,6 @@ func filte_field_name(obj obj_info_s, field_name string, res *[]map[string]strin
 			if fn == "" || !ok2 {
 				continue
 			} else {
-
 				obj2["id"] = obj.Info["id"]
 				obj2[fn] = field_value
 			}
@@ -420,6 +446,31 @@ func cron_jobs() {
 					fmt.Println(e)
 				})
 			}
+		case <-time.After(time.Second * 2 * 600):
+			{
+				fmt.Println("remove time out id")
+				f.Try(func() {
+					for k, v := range object_info_id_obj {
+						if v.Create_time > time.Now().Unix()-int64(86400*60) {
+							g.Object_info_map_lock.Lock()
+							delete(object_info_id_obj, k)
+							g.Object_info_map_lock.Unlock()
+						}
+					}
+				}, func(e interface{}) {
+					fmt.Println(e)
+				})
+			}
+
+		case <-time.After(time.Second * 3600):
+			{
+				fmt.Println("Post_node_info:reg ip")
+				f.Try(func() {
+					f.Post_node_info(default_meta_API_list, api_info_map)
+				}, func(e interface{}) {
+					fmt.Println(e)
+				})
+			}
 		}
 	}
 }
@@ -435,9 +486,11 @@ func store_obj_info(c *gin.Context, meta_data []byte) {
 		fmt.Println("meta_data:" + string(meta_data))
 		err := f.JSON_decode(meta_data, &api_info)
 		if err == nil {
+			api_info["id"] = g.Server_ip + ":" + api_info["id"]
 			id := api_info["id"]
-
 			object_info_obj := obj_info_s{}
+			api_info = g.Reset_field_name_map_nor_sort(&api_info)
+			api_info["rtsm"] = i64tos(time.Now().UnixNano() / 1e6)
 			object_info_obj.Info = api_info
 			object_info_obj.Create_time = time.Now().Unix()
 			g.Object_info_map_lock.Lock()
@@ -459,7 +512,7 @@ func store_obj_info(c *gin.Context, meta_data []byte) {
 func init_param() {
 	protocal.CRC16_init_param()
 	protocal.CRC32_init_param()
-	g.Get_sort_field_name_map()
+	g.Get_field_name_map_sort_nor()
 	g.Server_port = "8081"
 
 	default_meta_API_list = []string{"http://42.194.159.204:8081/api"}
@@ -490,13 +543,11 @@ func init_param() {
 	   meta_api_info_url:` + api_info_map["meta_api_info_url"]
 	*/
 	//fmt.Println(api_info_map)
-	new_api_info_map := map[string]string{}
 	for k, v := range api_info_map {
 		api_info_str += k + ":" + v + ",\n"
-		new_api_info_map[g.Sort_field_name_map[k]] = v
 	}
-	api_info_map = nil
-	api_info_map = new_api_info_map
+	api_info_map = g.Reset_field_name_map_nor_sort(&api_info_map)
+	api_info_map["rtsm"] = i64tos(time.Now().UnixNano() / 1e6)
 
 	fmt.Println(api_info_str)
 
