@@ -30,17 +30,17 @@ Metaverse basic API interface (you can obtain other node information through thi
 
 元宇宙基础API接口（可通过此服务器获取其他节点信息，遍历元宇宙）：
 
-http://42.194.159.204:8081/api
+http://8.222.174.114:8081/api
 
 Server open source code: 服务器开源代码：
 
 https://gitee.com/hayoou/metaverse_api_server_go
 
 
-[API test 1 . API测试 1](http://42.194.159.204:8081/api?do=get_nodes&limit=10&offset=0)
+[API test 1 . API测试 1](http://8.222.174.114:8081/api?do=get_nodes&limit=10&offset=0)
 
 
-[API test2 Search node. API测试2 搜索节点](http://42.194.159.204:8081/api?do=search_nodes&object_id=&field_name=&meta_api_class_id=meta-api-server&limit=10&offset=0)
+[API test2 Search node. API测试2 搜索节点](http://8.222.174.114:8081/api?do=search_nodes&object_id=&field_name=&meta_api_class_id=meta-api-server&limit=10&offset=0)
 
 
 Install Server：

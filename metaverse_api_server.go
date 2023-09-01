@@ -261,7 +261,7 @@ func api_handle2(c *gin.Context) {
 		return
 	}
 	if do == "search_nodes" {
-		//http://42.194.159.204:8081/api?do=search_nodes&object_id=meta-api-server-id-42.194.159.204&field_name=&meta_api_class_id=&limit=10&offset=0
+		//http://8.222.174.114:8081/api?do=search_nodes&object_id=meta-api-server-id-8.222.174.114&field_name=&meta_api_class_id=&limit=10&offset=0
 		object_id := GET_query(c, "object_id")
 		field_name := GET_query(c, "field_name")
 		meta_api_class_id := GET_query(c, "meta_api_class_id")
@@ -515,7 +515,7 @@ func init_param() {
 	g.Get_field_name_map_sort_nor()
 	g.Server_port = "8081"
 
-	default_meta_API_list = []string{"http://42.194.159.204:8081/api"}
+	default_meta_API_list = []string{"http://8.222.174.114:8081/api"}
 	var api_list = default_meta_API_list
 
 	g.Server_ip = f.GetPulicIP2()
