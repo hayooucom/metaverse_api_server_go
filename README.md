@@ -3,7 +3,15 @@
 #### 介绍
 元宇宙接口 API 服务器 实现。 
 
-The implementation of  [Metaverse standard API 元宇宙接口标准](https://pan.baidu.com/s/1yyHEw3puXZAQSflP295IEw?pwd=5566)
+The implementation of  [Metaverse standard API 元宇宙接口标准](https://docs.qq.com/doc/DS1BmcG1UcHpTcGtL)
+
+【腾讯文档】  https://docs.qq.com/s/KqBnhlFoGs_fgfE8rs5eSG
+
+所有信息收录以在线腾讯文档为主
+
+离线文档已过期：
+
+[百度网盘](https://pan.baidu.com/s/1ynV8wJm-Rudqoilfyz9i5A)
 提取码：5566
 
 ![image](files/server-sence-object-relation.png)
@@ -30,17 +38,17 @@ Metaverse basic API interface (you can obtain other node information through thi
 
 元宇宙基础API接口（可通过此服务器获取其他节点信息，遍历元宇宙）：
 
-http://8.222.174.114:8081/api
+http://sg.zyinfo.pro:8081/api
 
 Server open source code: 服务器开源代码：
 
 https://gitee.com/hayoou/metaverse_api_server_go
 
 
-[API test 1 . API测试 1](http://8.222.174.114:8081/api?do=get_nodes&limit=10&offset=0)
+[API test 1 . API测试 1](http://sg.zyinfo.pro:8081/api?do=get_nodes&limit=10&offset=0)
 
 
-[API test2 Search node. API测试2 搜索节点](http://8.222.174.114:8081/api?do=search_nodes&object_id=&field_name=&meta_api_class_id=meta-api-server&limit=10&offset=0)
+[API test2 Search node. API测试2 搜索节点](http://sg.zyinfo.pro:8081/api?do=search_nodes&object_id=&field_name=&meta_api_class_id=meta-api-server&limit=10&offset=0)
 
 
 Install Server：

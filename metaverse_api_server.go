@@ -27,10 +27,10 @@ func set_api_info_map() {
 		"meta_api_id":         "meta-api-server-id-" + g.Server_ip,
 		"meta_api_class_name": "meta-api-server",
 		"meta_api_class_id":   "meta-api-server-class",
-		"api_info":            "https://thoughts.aliyun.com/share/61953ed66a1d11001aecd4f9#title=元宇宙通用通信协议_Metaverse_General_Protocal",
-		"info_url":            "https://thoughts.aliyun.com/share/6195068ebdc2c4001aea0058",
+		"api_info":            "https://docs.qq.com/doc/DS1BmcG1UcHpTcGtL",
+		"info_url":            "https://docs.qq.com/doc/DS0JOUndFcXprdVhU",
 		"api_url":             "http://" + g.Server_ip + ":" + g.Server_port + "/api",
-		"meta_api_info_url":   "https://thoughts.aliyun.com/share/61954da2c1a410001add844d#title=元宇宙_API_基础信息原语描述_Metaverse_API_schema",
+		"meta_api_info_url":   "https://docs.qq.com/doc/DS3VZVFVrYUdZbGpt",
 	}
 }
 
@@ -192,7 +192,7 @@ func process_commands(c *gin.Context, data []byte) {
 func website_handle(c *gin.Context) {
 	html_str := strings.Replace(api_info_str, "\n", "<br>\n", -1)
 	//html_str += "\n<br><a href=\"" + api_info_map[g.Field_name_map_nor_sort["api_url"]] + "?do=get_nodes&count=0&limit=20&offset=0\">" + "connected nodes list</a><br>" +
-	//	"\n<br><a href=\"https://thoughts.aliyun.com/share/6195068ebdc2c4001aea0058#title=元宇宙接口标准\">" + "API docs</a><br>"
+	//	"\n<br><a href=\"https://docs.qq.com/doc/DS0JOUndFcXprdVhU#title=元宇宙接口标准\">" + "API docs</a><br>"
 	//c.String(http.StatusOK, html_str)
 
 	c.HTML(http.StatusOK, "index.html", gin.H{
@@ -261,7 +261,7 @@ func api_handle2(c *gin.Context) {
 		return
 	}
 	if do == "search_nodes" {
-		//http://8.222.174.114:8081/api?do=search_nodes&object_id=meta-api-server-id-8.222.174.114&field_name=&meta_api_class_id=&limit=10&offset=0
+		//http://sg.zyinfo.pro:8081/api?do=search_nodes&object_id=meta-api-server-id-sg.zyinfo.pro&field_name=&meta_api_class_id=&limit=10&offset=0
 		object_id := GET_query(c, "object_id")
 		field_name := GET_query(c, "field_name")
 		meta_api_class_id := GET_query(c, "meta_api_class_id")
@@ -515,7 +515,7 @@ func init_param() {
 	g.Get_field_name_map_sort_nor()
 	g.Server_port = "8081"
 
-	default_meta_API_list = []string{"http://8.222.174.114:8081/api"}
+	default_meta_API_list = []string{"http://sg.zyinfo.pro:8081/api"}
 	var api_list = default_meta_API_list
 
 	g.Server_ip = f.GetPulicIP2()
