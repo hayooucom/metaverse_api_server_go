@@ -3,7 +3,8 @@
 #### 介绍
 元宇宙接口 API 服务器 实现。 
 
-The implementation of  [Metaverse standard API 元宇宙接口标准](https://thoughts.aliyun.com/share/6195068ebdc2c4001aea0058#title=Metaverse_standard_API)
+The implementation of  [Metaverse standard API 元宇宙接口标准](https://pan.baidu.com/s/1yyHEw3puXZAQSflP295IEw?pwd=5566)
+提取码：5566
 
 ![image](files/server-sence-object-relation.png)
 
